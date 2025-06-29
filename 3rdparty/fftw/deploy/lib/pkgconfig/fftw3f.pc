@@ -1,0 +1,11 @@
+prefix=/Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy
+exec_prefix=/Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy
+libdir=/Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy/lib
+includedir=/Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy/include
+
+Name: FFTW
+Description: fast Fourier transform library
+Version: 3.3.9
+Libs: -L${libdir} -lfftw3f 
+Libs.private: -lm
+Cflags: -I${includedir}
