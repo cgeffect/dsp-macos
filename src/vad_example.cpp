@@ -408,6 +408,62 @@ std::vector<spx_int16_t> generate_test_audio_sequence(int sample_rate, int chann
     return audio_sequence;
 }
 
+// 打印测试音频数据段信息
+void print_test_audio_segments(int sample_rate, int channels, int bit_depth) {
+    std::cout << "\n=== 测试音频数据段信息 ===" << std::endl;
+    std::cout << "采样率: " << sample_rate << " Hz, 声道数: " << channels 
+              << ", 位深度: " << bit_depth << " bit" << std::endl;
+    std::cout << "每个样本字节数: " << (bit_depth / 8) << " 字节" << std::endl;
+    std::cout << "每个帧字节数: " << (channels * bit_depth / 8) << " 字节" << std::endl;
+    
+    struct AudioSegment {
+        std::string name;
+        int duration_ms;
+        std::string type;
+        std::string description;
+    };
+    
+    std::vector<AudioSegment> segments = {
+        {"段1", 500, "静音", "纯静音数据"},
+        {"段2", 1000, "正弦波", "440Hz正弦波，振幅8000"},
+        {"段3", 300, "静音", "纯静音数据"},
+        {"段4", 800, "正弦波", "880Hz正弦波，振幅6000"},
+        {"段5", 200, "低音量", "220Hz正弦波，振幅50（接近静音）"},
+        {"段6", 400, "静音", "纯静音数据"},
+        {"段7", 600, "带噪声", "660Hz正弦波+噪声，噪声级别2000"},
+        {"段8", 500, "静音", "纯静音数据"}
+    };
+    
+    size_t current_byte = 0;
+    double current_time = 0.0;
+    
+    for (const auto& seg : segments) {
+        size_t samples = (sample_rate * seg.duration_ms) / 1000;
+        size_t bytes = samples * channels * (bit_depth / 8);
+        double end_time = current_time + seg.duration_ms;
+        size_t end_byte = current_byte + bytes;
+        
+        std::cout << seg.name << ":" << std::endl;
+        std::cout << "  数据类型: " << seg.type << std::endl;
+        std::cout << "  描述: " << seg.description << std::endl;
+        std::cout << "  时间范围: " << std::fixed << std::setprecision(1) 
+                  << current_time << "ms - " << end_time << "ms" << std::endl;
+        std::cout << "  持续时间: " << seg.duration_ms << "ms" << std::endl;
+        std::cout << "  字节范围: " << current_byte << " - " << end_byte << std::endl;
+        std::cout << "  字节数量: " << bytes << " 字节" << std::endl;
+        std::cout << "  样本数量: " << samples << " 样本" << std::endl;
+        std::cout << std::endl;
+        
+        current_byte = end_byte;
+        current_time = end_time;
+    }
+    
+    std::cout << "总计:" << std::endl;
+    std::cout << "  总时长: " << std::fixed << std::setprecision(1) << current_time << "ms" << std::endl;
+    std::cout << "  总字节数: " << current_byte << " 字节" << std::endl;
+    std::cout << "  总样本数: " << (current_byte / (channels * (bit_depth / 8))) << " 样本" << std::endl;
+}
+
 // ==================== 主函数 ====================
 
 int main() {
@@ -430,6 +486,9 @@ int main() {
     std::cout << "\n步骤1: 生成测试音频数据..." << std::endl;
     auto test_audio = generate_test_audio_sequence(sample_rate, channels, bit_depth);
     std::cout << "✅ 测试音频生成完成，总时长: " << pcm_info.samples_to_ms(test_audio.size()) << "ms" << std::endl;
+    
+    // 打印测试音频数据段信息
+    print_test_audio_segments(sample_rate, channels, bit_depth);
     
     // 步骤2: 保存PCM文件
     std::cout << "\n步骤2: 保存PCM文件..." << std::endl;
