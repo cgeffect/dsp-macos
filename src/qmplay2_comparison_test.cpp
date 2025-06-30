@@ -79,14 +79,7 @@ private:
     std::vector<float> input_buffer_;
     
 public:
-    QMPlay2StyleEqualizer(int fft_bits = 10, double sample_rate = 48000.0) 
-        : fft_bits_(fft_bits)
-        , fft_size_(1 << fft_bits)
-        , sample_rate_(sample_rate)
-        , preamp_(1.0f)
-        , fft_plan_forward_(nullptr)
-        , fft_plan_backward_(nullptr)
-        , fft_buffer_(nullptr) {
+    QMPlay2StyleEqualizer() : fft_size_(4096), sample_rate_(48000), preamp_(1.0f) {
         init();
     }
     
@@ -124,6 +117,12 @@ public:
         if (fft_buffer_) fftwf_free(fft_buffer_);
     }
     
+    // QMPlay2风格的余弦插值函数
+    static float cosI(float y1, float y2, float p) {
+        p = (1.0f - cos(p * M_PI)) / 2.0f;
+        return y1 * (1.0f - p) + y2 * p;
+    }
+    
     // QMPlay2风格的增益计算函数
     static float getAmpl(int val) {
         if (val < 0)
@@ -152,31 +151,33 @@ public:
         // 清空响应
         std::fill(eq_response_.begin(), eq_response_.end(), 1.0f);
         
-        // 计算每个频率点的增益
-        for (size_t i = 0; i < eq_response_.size(); ++i) {
-            double freq = static_cast<double>(i + 1) * sample_rate_ / (2.0 * eq_response_.size());
+        // 计算每个FFT bin的增益（使用QMPlay2的余弦插值）
+        std::vector<float> gains(fft_size_ / 2);
+        const int maxHz = sample_rate_ / 2;
+        
+        for (int i = 0; i < fft_size_ / 2; ++i) {
+            const float freq = (i + 1) * maxHz / (fft_size_ / 2);
             
-            // 找到最近的频段进行插值
-            float gain = 1.0f;
-            for (size_t j = 0; j < freqs.size() - 1; ++j) {
-                if (freq >= freqs[j] && freq <= freqs[j + 1]) {
-                    // 线性插值
-                    float p = static_cast<float>((freq - freqs[j]) / (freqs[j + 1] - freqs[j]));
-                    float g1 = getAmpl(slider_values[j]);
-                    float g2 = getAmpl(slider_values[j + 1]);
-                    gain = g1 * (1.0f - p) + g2 * p;
-                    break;
+            // 找到对应的EQ频段
+            int band = 0;
+            for (int j = 0; j < freqs.size(); ++j) {
+                if (freq >= freqs[j]) {
+                    band = j;
                 }
             }
             
-            // 如果频率超出范围，使用边界值
-            if (freq < freqs[0]) {
-                gain = getAmpl(slider_values[0]);
-            } else if (freq > freqs.back()) {
-                gain = getAmpl(slider_values.back());
+            // 使用QMPlay2的余弦插值
+            if (band + 1 < freqs.size()) {
+                float p = (freq - freqs[band]) / (freqs[band + 1] - freqs[band]);
+                gains[i] = cosI(getAmpl(slider_values[band]), getAmpl(slider_values[band + 1]), p);
+            } else {
+                gains[i] = getAmpl(slider_values.back());
             }
-            
-            eq_response_[i] = gain * preamp_;
+        }
+        
+        // 应用增益
+        for (int i = 0; i < fft_size_ / 2; ++i) {
+            eq_response_[i] = gains[i] * preamp_;
         }
     }
     
@@ -245,6 +246,10 @@ public:
         
         return output;
     }
+    
+    int getFFTSize() const {
+        return fft_size_;
+    }
 };
 
 // 创建QMPlay2风格的EQ预设
@@ -297,10 +302,11 @@ int main() {
     double sample_rate = 48000.0;
     int fft_bits = 10;  // 1024点FFT
     
-    std::cout << "\n配置参数（QMPlay2风格）:" << std::endl;
+    std::cout << "配置参数（QMPlay2风格）:" << std::endl;
     std::cout << "采样率: " << sample_rate << " Hz" << std::endl;
-    std::cout << "FFT大小: " << (1 << fft_bits) << std::endl;
+    std::cout << "FFT大小: " << (1 << fft_bits) << " (4096 for better low frequency resolution)" << std::endl;
     std::cout << "滑块范围: 0-100，50为中性值" << std::endl;
+    std::cout << std::endl;
     
     // 读取音频文件
     std::cout << "\n步骤1: 读取音频文件..." << std::endl;
@@ -320,7 +326,7 @@ int main() {
     std::cout << "  峰值: " << input_peak << std::endl;
     
     // 创建EQ实例
-    QMPlay2StyleEqualizer eq(fft_bits, sample_rate);
+    QMPlay2StyleEqualizer eq;
     
     // 定义QMPlay2风格的测试预设
     std::vector<std::string> presets = {"flat", "bass_boost", "treble_boost", "vocal_boost", "rock", "jazz", "classical", "pop", "max_bass", "min_bass"};
