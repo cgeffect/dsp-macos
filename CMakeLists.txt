@@ -67,6 +67,16 @@ add_executable(agc_test ${CMAKE_CURRENT_SOURCE_DIR}/src/agc_test.cpp ${SOURCE_FI
 target_include_directories(agc_test PRIVATE ${libSRV_INCLUDES_DIR})
 target_link_libraries(agc_test PRIVATE ${libs_trd_srv} ${SYS_LIBS})
 
+# 添加rnnoise_test可执行文件
+add_executable(rnnoise_test ${CMAKE_CURRENT_SOURCE_DIR}/src/rnnoise_test.cpp)
+target_include_directories(rnnoise_test PRIVATE ${libSRV_INCLUDES_DIR})
+target_link_libraries(rnnoise_test PRIVATE ${libs_trd_srv} ${SYS_LIBS})
+
+# 添加rnnoise_demo可执行文件
+add_executable(rnnoise_demo ${CMAKE_CURRENT_SOURCE_DIR}/src/rnnoise_demo.c)
+target_include_directories(rnnoise_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/rnnoise/deploy/include)
+target_link_libraries(rnnoise_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/rnnoise/deploy/lib/librnnoise.a)
+
 # # 设置库路径
 # set_target_properties(vad_example PROPERTIES
 #     BUILD_WITH_INSTALL_RPATH TRUE

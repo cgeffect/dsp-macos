@@ -23,3 +23,7 @@ RNNoise是C语言库，但可以在C++项目中使用
 降噪效果比SpeexDSP好很多，因为用了深度学习
 专注于降噪+VAD，没有AGC、AEC等功能
 适合与SpeexDSP配合使用 - RNNoise负责降噪，SpeexDSP负责AGC
+
+噪音文件下载
+https://ecs.utdallas.edu/loizou/speech/noizeus/
+https://datashare.ed.ac.uk/handle/10283/2791
