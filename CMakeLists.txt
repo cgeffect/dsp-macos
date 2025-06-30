@@ -89,6 +89,11 @@ add_executable(qmplay2_eq ${CMAKE_CURRENT_SOURCE_DIR}/src/qmplay2_eq.cpp)
 target_include_directories(qmplay2_eq PRIVATE ${libSRV_INCLUDES_DIR})
 target_link_libraries(qmplay2_eq PRIVATE ${libs_trd_srv} ${SYS_LIBS})
 
+# 添加qmplay2_comparison_test可执行文件
+add_executable(qmplay2_comparison_test ${CMAKE_CURRENT_SOURCE_DIR}/src/qmplay2_comparison_test.cpp)
+target_include_directories(qmplay2_comparison_test PRIVATE ${libSRV_INCLUDES_DIR})
+target_link_libraries(qmplay2_comparison_test PRIVATE ${libs_trd_srv} ${SYS_LIBS})
+
 # # 设置库路径
 # set_target_properties(vad_example PROPERTIES
 #     BUILD_WITH_INSTALL_RPATH TRUE

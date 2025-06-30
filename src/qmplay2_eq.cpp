@@ -315,7 +315,7 @@ std::vector<float> createEQPreset(const std::string& preset_name) {
 }
 
 int main() {
-    std::cout << "=== QMPlay2风格EQ均衡器 - 平坦EQ测试 ===" << std::endl;
+    std::cout << "=== QMPlay2风格EQ均衡器 - 平坦EQ vs 温和EQ对比测试 ===" << std::endl;
     std::cout << "验证FFT转换和频域调整的基本逻辑" << std::endl;
     
     // 配置参数
@@ -346,72 +346,107 @@ int main() {
     // 创建EQ实例
     QMPlay2Equalizer eq(fft_bits, sample_rate);
     
-    // 测试平坦EQ（所有频段为0dB）
-    std::cout << "\n步骤3: 平坦EQ测试..." << std::endl;
+    // 定义测试配置
+    struct TestConfig {
+        std::string name;
+        std::vector<float> db_values;
+        std::string description;
+    };
     
-    // 设置平坦EQ配置
-    std::vector<float> flat_db = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    eq.setEQdB(flat_db);
-    eq.setPreamp(1.0f);
+    std::vector<TestConfig> test_configs = {
+        {
+            "平坦EQ",
+            {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+            "所有频段为0dB，理论上输出应该和输入几乎一样"
+        },
+        {
+            "温和重低音",
+            {6.0f, 4.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+            "低频温和提升：200Hz+6dB, 380Hz+4dB, 723Hz+2dB"
+        },
+        {
+            "只提升200Hz",
+            {6.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+            "只提升200Hz频段6dB，其他频段保持0dB"
+        }
+    };
     
-    std::cout << "EQ配置（平坦响应）:" << std::endl;
-    auto freqs = QMPlay2Equalizer::calculateFreqs(flat_db.size());
-    for (size_t j = 0; j < flat_db.size(); ++j) {
-        std::cout << "  频率: " << std::setw(5) << freqs[j] << "Hz, "
-                  << "增益: " << std::setw(6) << flat_db[j] << "dB" << std::endl;
+    // 执行测试
+    for (size_t test_idx = 0; test_idx < test_configs.size(); ++test_idx) {
+        const auto& config = test_configs[test_idx];
+        
+        std::cout << "\n步骤3." << (test_idx + 1) << ": " << config.name << "测试..." << std::endl;
+        std::cout << "描述: " << config.description << std::endl;
+        
+        // 设置EQ配置
+        eq.setEQdB(config.db_values);
+        eq.setPreamp(1.0f);
+        
+        std::cout << "EQ配置:" << std::endl;
+        auto freqs = QMPlay2Equalizer::calculateFreqs(config.db_values.size());
+        for (size_t j = 0; j < config.db_values.size(); ++j) {
+            std::cout << "  频率: " << std::setw(5) << freqs[j] << "Hz, "
+                      << "增益: " << std::setw(6) << config.db_values[j] << "dB" << std::endl;
+        }
+        
+        // 应用EQ处理（核心逻辑完全相同）
+        auto processed_audio = eq.processAudio(input_audio);
+        
+        // 分析输出音频
+        double output_rms = calculate_rms(processed_audio);
+        short output_peak = calculate_peak(processed_audio);
+        
+        std::cout << "输出音频分析:" << std::endl;
+        std::cout << "  RMS: " << std::fixed << std::setprecision(2) << output_rms << std::endl;
+        std::cout << "  峰值: " << output_peak << std::endl;
+        
+        // 计算变化
+        double rms_change = 20.0 * std::log10(output_rms / (input_rms + 1e-10));
+        std::cout << "  RMS变化: " << std::fixed << std::setprecision(2) << rms_change << " dB" << std::endl;
+        
+        // 计算样本差异（仅对平坦EQ有意义）
+        if (test_idx == 0) { // 平坦EQ
+            double total_diff = 0.0;
+            size_t num_samples = std::min(input_audio.size(), processed_audio.size());
+            for (size_t i = 0; i < num_samples; ++i) {
+                total_diff += std::abs(static_cast<double>(input_audio[i] - processed_audio[i]));
+            }
+            double avg_diff = total_diff / num_samples;
+            double diff_percentage = (avg_diff / 32767.0) * 100.0;
+            
+            std::cout << "  平均样本差异: " << std::fixed << std::setprecision(2) << avg_diff << std::endl;
+            std::cout << "  差异百分比: " << std::fixed << std::setprecision(4) << diff_percentage << "%" << std::endl;
+            
+            // 验证平坦EQ结果
+            if (std::abs(rms_change) < 0.1 && diff_percentage < 1.0) {
+                std::cout << "  ✅ 平坦EQ测试通过！" << std::endl;
+            } else {
+                std::cout << "  ❌ 平坦EQ测试失败！" << std::endl;
+            }
+        }
+        
+        // 保存处理后的文件
+        std::string output_filename = "eq_test_" + std::to_string(test_idx + 1) + "_" + config.name + ".pcm";
+        save_pcm_file_int16(processed_audio, output_filename);
     }
     
-    // 应用EQ处理
-    auto processed_audio = eq.processAudio(input_audio);
-    
-    // 分析输出音频
-    double output_rms = calculate_rms(processed_audio);
-    short output_peak = calculate_peak(processed_audio);
-    
-    std::cout << "输出音频分析:" << std::endl;
-    std::cout << "  RMS: " << std::fixed << std::setprecision(2) << output_rms << std::endl;
-    std::cout << "  峰值: " << output_peak << std::endl;
-    
-    // 计算变化
-    double rms_change = 20.0 * std::log10(output_rms / (input_rms + 1e-10));
-    std::cout << "  RMS变化: " << std::fixed << std::setprecision(2) << rms_change << " dB" << std::endl;
-    
-    // 计算样本差异
-    double total_diff = 0.0;
-    size_t num_samples = std::min(input_audio.size(), processed_audio.size());
-    for (size_t i = 0; i < num_samples; ++i) {
-        total_diff += std::abs(static_cast<double>(input_audio[i] - processed_audio[i]));
-    }
-    double avg_diff = total_diff / num_samples;
-    double diff_percentage = (avg_diff / 32767.0) * 100.0;
-    
-    std::cout << "  平均样本差异: " << std::fixed << std::setprecision(2) << avg_diff << std::endl;
-    std::cout << "  差异百分比: " << std::fixed << std::setprecision(4) << diff_percentage << "%" << std::endl;
-    
-    // 保存处理后的文件
-    std::string output_filename = "flat_eq_test.pcm";
-    save_pcm_file_int16(processed_audio, output_filename);
-    
-    // 验证结果
-    std::cout << "\n=== 平坦EQ测试结果 ===" << std::endl;
-    if (std::abs(rms_change) < 0.1 && diff_percentage < 1.0) {
-        std::cout << "✅ 测试通过！平坦EQ工作正常" << std::endl;
-        std::cout << "  - RMS变化: " << std::fixed << std::setprecision(2) << rms_change << " dB (期望 < 0.1dB)" << std::endl;
-        std::cout << "  - 样本差异: " << std::fixed << std::setprecision(4) << diff_percentage << "% (期望 < 1%)" << std::endl;
-    } else {
-        std::cout << "❌ 测试失败！平坦EQ存在问题" << std::endl;
-        std::cout << "  - RMS变化: " << std::fixed << std::setprecision(2) << rms_change << " dB" << std::endl;
-        std::cout << "  - 样本差异: " << std::fixed << std::setprecision(4) << diff_percentage << "%" << std::endl;
+    // 总结
+    std::cout << "\n=== 测试完成 ===" << std::endl;
+    std::cout << "生成的文件:" << std::endl;
+    for (size_t i = 0; i < test_configs.size(); ++i) {
+        std::cout << "  eq_test_" << (i + 1) << "_" << test_configs[i].name << ".pcm" << std::endl;
     }
     
-    std::cout << "\n播放命令:" << std::endl;
+    std::cout << "\n播放命令（对比测试）:" << std::endl;
     std::cout << "  原始音频: ffplay -f s16le -ar 48000 -nodisp -autoexit res/48000_1_s16le.pcm" << std::endl;
-    std::cout << "  平坦EQ输出: ffplay -f s16le -ar 48000 -nodisp -autoexit flat_eq_test.pcm" << std::endl;
+    for (size_t i = 0; i < test_configs.size(); ++i) {
+        std::cout << "  " << test_configs[i].name << ": ffplay -f s16le -ar 48000 -nodisp -autoexit eq_test_" << (i + 1) << "_" << test_configs[i].name << ".pcm" << std::endl;
+    }
     
-    std::cout << "\n说明:" << std::endl;
-    std::cout << "  - 平坦EQ测试验证FFT转换和频域调整的基本逻辑" << std::endl;
-    std::cout << "  - 所有频段设为0dB，理论上输出应该和输入几乎一样" << std::endl;
-    std::cout << "  - 如果测试通过，说明核心算法正确，可以继续测试其他EQ设置" << std::endl;
+    std::cout << "\n对比说明:" << std::endl;
+    std::cout << "  - 所有测试使用完全相同的核心逻辑（FFT转换+频域调整）" << std::endl;
+    std::cout << "  - 只有EQ参数不同，便于对比效果" << std::endl;
+    std::cout << "  - 平坦EQ验证算法正确性，温和EQ测试实际效果" << std::endl;
     
     return 0;
 } 
