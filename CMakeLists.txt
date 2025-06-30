@@ -77,6 +77,11 @@ add_executable(rnnoise_demo ${CMAKE_CURRENT_SOURCE_DIR}/src/rnnoise_demo.c)
 target_include_directories(rnnoise_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/rnnoise/deploy/include)
 target_link_libraries(rnnoise_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/rnnoise/deploy/lib/librnnoise.a)
 
+# 添加rnnoise_vad_test可执行文件
+add_executable(rnnoise_vad_test ${CMAKE_CURRENT_SOURCE_DIR}/src/rnnoise_vad_test.cpp)
+target_include_directories(rnnoise_vad_test PRIVATE ${libSRV_INCLUDES_DIR})
+target_link_libraries(rnnoise_vad_test PRIVATE ${libs_trd_srv} ${SYS_LIBS})
+
 # # 设置库路径
 # set_target_properties(vad_example PROPERTIES
 #     BUILD_WITH_INSTALL_RPATH TRUE
