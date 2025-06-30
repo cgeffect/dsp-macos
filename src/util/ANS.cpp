@@ -28,11 +28,8 @@ ANS::~ANS() {
 }
 
 bool ANS::init(int sample_rate, int frame_size) {
-    std::cout << "ANS::init called with sample_rate=" << sample_rate << ", frame_size=" << frame_size << std::endl;
-    
     // 如果已经初始化，先清理
     if (preprocess_state_) {
-        std::cout << "Destroying existing preprocess state" << std::endl;
         speex_preprocess_state_destroy(preprocess_state_);
         preprocess_state_ = nullptr;
     }
@@ -43,12 +40,8 @@ bool ANS::init(int sample_rate, int frame_size) {
         return false;
     }
     
-    std::cout << "Creating speex preprocess state..." << std::endl;
-    
     // 创建speex预处理器状态
     preprocess_state_ = speex_preprocess_state_init(frame_size, sample_rate);
-    
-    std::cout << "speex_preprocess_state_init returned: " << (preprocess_state_ ? "valid pointer" : "null") << std::endl;
     
     if (!preprocess_state_) {
         std::cerr << "ANS init failed: cannot create preprocess state" << std::endl;
@@ -60,8 +53,6 @@ bool ANS::init(int sample_rate, int frame_size) {
     sample_rate_ = sample_rate;
     is_initialized_ = true;
     
-    std::cout << "Setting default parameters..." << std::endl;
-    
     // 设置默认参数
     set_noise_suppress_params(noise_suppress_, echo_suppress_, echo_suppress_active_);
     set_agc_params(agc_level_, agc_increment_, agc_decrement_, agc_max_gain_);
@@ -71,15 +62,10 @@ bool ANS::init(int sample_rate, int frame_size) {
     set_agc_enabled(true);
     set_echo_suppress_enabled(true);
     
-    std::cout << "ANS initialized successfully: sample_rate=" << sample_rate 
-              << ", frame_size=" << frame_size << std::endl;
-    
     return true;
 }
 
 std::vector<spx_int16_t> ANS::process_frame(const spx_int16_t* audio_frame, int frame_size) {
-    std::cout << "ANS::process_frame called with frame_size=" << frame_size << std::endl;
-    
     if (!is_initialized_ || !preprocess_state_) {
         std::cerr << "ANS not initialized" << std::endl;
         return std::vector<spx_int16_t>();
@@ -87,42 +73,24 @@ std::vector<spx_int16_t> ANS::process_frame(const spx_int16_t* audio_frame, int 
     
     if (!audio_frame || frame_size != frame_size_) {
         std::cerr << "ANS process failed: invalid audio frame or frame size" << std::endl;
-        std::cerr << "  audio_frame: " << (audio_frame ? "valid" : "null") << std::endl;
-        std::cerr << "  frame_size: " << frame_size << ", expected: " << frame_size_ << std::endl;
         return std::vector<spx_int16_t>();
     }
     
     try {
-        std::cout << "Creating output frame with size " << frame_size << std::endl;
-        
         // 创建输出缓冲区
         std::vector<spx_int16_t> output_frame(frame_size);
-        std::cout << "Output frame created, size: " << output_frame.size() << std::endl;
         
-        std::cout << "Copying audio data..." << std::endl;
+        // 复制音频数据
         std::memcpy(output_frame.data(), audio_frame, frame_size * sizeof(spx_int16_t));
-        std::cout << "Audio data copied successfully" << std::endl;
-        
-        // 检查前几个样本值
-        std::cout << "First 5 samples: ";
-        for (int i = 0; i < std::min(5, frame_size); ++i) {
-            std::cout << output_frame[i] << " ";
-        }
-        std::cout << std::endl;
-        
-        std::cout << "Calling speex_preprocess_run..." << std::endl;
         
         // 使用speex预处理器进行噪声抑制
         // 注意：speex_preprocess_run会修改输入的音频数据
         int result = speex_preprocess_run(preprocess_state_, output_frame.data());
         
-        std::cout << "speex_preprocess_run completed with result: " << result << std::endl;
-        
         if (result != 0) {
             std::cerr << "ANS process warning: speex_preprocess_run returned " << result << std::endl;
         }
         
-        std::cout << "Returning processed frame" << std::endl;
         return output_frame;
     } catch (const std::exception& e) {
         std::cerr << "ANS process exception: " << e.what() << std::endl;
@@ -162,10 +130,6 @@ void ANS::set_noise_suppress_params(int noise_suppress, int echo_suppress, int e
     speex_preprocess_ctl(preprocess_state_, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &noise_suppress_);
     speex_preprocess_ctl(preprocess_state_, SPEEX_PREPROCESS_SET_ECHO_SUPPRESS, &echo_suppress_);
     speex_preprocess_ctl(preprocess_state_, SPEEX_PREPROCESS_SET_ECHO_SUPPRESS_ACTIVE, &echo_suppress_active_);
-    
-    std::cout << "ANS noise suppress parameters set: noise_suppress=" << noise_suppress_ 
-              << ", echo_suppress=" << echo_suppress_ 
-              << ", echo_suppress_active=" << echo_suppress_active_ << std::endl;
 }
 
 void ANS::set_agc_params(int agc_level, int agc_increment, int agc_decrement, int agc_max_gain) {
@@ -191,11 +155,6 @@ void ANS::set_agc_params(int agc_level, int agc_increment, int agc_decrement, in
     speex_preprocess_ctl(preprocess_state_, SPEEX_PREPROCESS_SET_AGC_INCREMENT, &agc_increment_);
     speex_preprocess_ctl(preprocess_state_, SPEEX_PREPROCESS_SET_AGC_DECREMENT, &agc_decrement_);
     speex_preprocess_ctl(preprocess_state_, SPEEX_PREPROCESS_SET_AGC_MAX_GAIN, &agc_max_gain_);
-    
-    std::cout << "ANS AGC parameters set: agc_level=" << agc_level_ 
-              << ", agc_increment=" << agc_increment_ 
-              << ", agc_decrement=" << agc_decrement_ 
-              << ", agc_max_gain=" << agc_max_gain_ << std::endl;
 }
 
 void ANS::set_noise_suppress_enabled(bool enabled) {
@@ -206,8 +165,6 @@ void ANS::set_noise_suppress_enabled(bool enabled) {
     
     int enable = enabled ? 1 : 0;
     speex_preprocess_ctl(preprocess_state_, SPEEX_PREPROCESS_SET_DENOISE, &enable);
-    
-    std::cout << "ANS noise suppress " << (enabled ? "enabled" : "disabled") << std::endl;
 }
 
 void ANS::set_agc_enabled(bool enabled) {
@@ -218,8 +175,6 @@ void ANS::set_agc_enabled(bool enabled) {
     
     int enable = enabled ? 1 : 0;
     speex_preprocess_ctl(preprocess_state_, SPEEX_PREPROCESS_SET_AGC, &enable);
-    
-    std::cout << "ANS AGC " << (enabled ? "enabled" : "disabled") << std::endl;
 }
 
 void ANS::set_echo_suppress_enabled(bool enabled) {
@@ -229,7 +184,6 @@ void ANS::set_echo_suppress_enabled(bool enabled) {
     }
     
     // echo suppress功能只需设置echo_suppress参数，无需设置ECHO_STATE指针
-    std::cout << "ANS echo suppress " << (enabled ? "enabled" : "disabled") << std::endl;
 }
 
 void ANS::reset() {
@@ -250,8 +204,6 @@ void ANS::reset() {
         set_noise_suppress_enabled(true);
         set_agc_enabled(true);
         set_echo_suppress_enabled(true);
-        
-        std::cout << "ANS state reset" << std::endl;
     } else {
         is_initialized_ = false;
         std::cerr << "ANS reset failed" << std::endl;

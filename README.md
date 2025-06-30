@@ -27,3 +27,6 @@ RNNoise是C语言库，但可以在C++项目中使用
 噪音文件下载
 https://ecs.utdallas.edu/loizou/speech/noizeus/
 https://datashare.ed.ac.uk/handle/10283/2791
+
+rnnoise的入参要求 48000 单声道 16位
+speex  的入参要求 16000 单声道 16位
