@@ -28,6 +28,7 @@
 // 入参需要的格式是 48k 16bit 单声道
 // # 从WAV转换为48kHz 16bit单声道PCM
 // ffmpeg -i input.wav -f s16le -ar 48000 -ac 1 output.pcm
+// ffplay -ar 48000 -f s16le out.pcm -nodisp -autoexit
 #include <stdio.h>
 #include "rnnoise.h"
 
