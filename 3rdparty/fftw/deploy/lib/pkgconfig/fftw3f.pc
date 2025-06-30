@@ -1,7 +1,7 @@
-prefix=/Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy
-exec_prefix=/Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy
-libdir=/Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy/lib
-includedir=/Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy/include
+prefix=/Users/jason/Jason/webrtc/dsp-macos/3rdparty/fftw/deploy
+exec_prefix=/Users/jason/Jason/webrtc/dsp-macos/3rdparty/fftw/deploy
+libdir=/Users/jason/Jason/webrtc/dsp-macos/3rdparty/fftw/deploy/lib
+includedir=/Users/jason/Jason/webrtc/dsp-macos/3rdparty/fftw/deploy/include
 
 Name: FFTW
 Description: fast Fourier transform library

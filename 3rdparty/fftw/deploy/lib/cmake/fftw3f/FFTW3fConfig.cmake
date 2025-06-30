@@ -7,8 +7,8 @@ endif ()
 set (FFTW3_CONFIG_FILE "${CMAKE_CURRENT_LIST_FILE}")
 
 set (FFTW3f_LIBRARIES fftw3f)
-set (FFTW3f_LIBRARY_DIRS /Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy/lib)
-set (FFTW3f_INCLUDE_DIRS /Users/jason/Desktop/AudioDSP/3rdparty/fftw/deploy/include)
+set (FFTW3f_LIBRARY_DIRS /Users/jason/Jason/webrtc/dsp-macos/3rdparty/fftw/deploy/lib)
+set (FFTW3f_INCLUDE_DIRS /Users/jason/Jason/webrtc/dsp-macos/3rdparty/fftw/deploy/include)
 
 include ("${CMAKE_CURRENT_LIST_DIR}/FFTW3LibraryDepends.cmake")
 

@@ -20,9 +20,11 @@ list(APPEND libSRV_INCLUDES_DIR ./)
 
 list(APPEND libSRV_INCLUDES_DIR ${libSRV_TRD_ROOT_PATH}/speexdsp/deploy/include)
 list(APPEND libSRV_INCLUDES_DIR ${libSRV_TRD_ROOT_PATH}/rnnoise/deploy/include)
+list(APPEND libSRV_INCLUDES_DIR ${libSRV_TRD_ROOT_PATH}/fftw/deploy/include)
 
 list(APPEND libs_trd_srv ${libSRV_TRD_ROOT_PATH}/speexdsp/deploy/lib/libspeexdsp.a)
 list(APPEND libs_trd_srv ${libSRV_TRD_ROOT_PATH}/rnnoise/deploy/lib/librnnoise.a)
+list(APPEND libs_trd_srv ${libSRV_TRD_ROOT_PATH}/fftw/deploy/lib/libfftw3f.a)
 
 find_library(LZMA_FRAMEWORK lzma)
 find_library(LZ_FRAMEWORK z)
@@ -81,6 +83,11 @@ target_link_libraries(rnnoise_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/
 add_executable(rnnoise_vad_test ${CMAKE_CURRENT_SOURCE_DIR}/src/rnnoise_vad_test.cpp)
 target_include_directories(rnnoise_vad_test PRIVATE ${libSRV_INCLUDES_DIR})
 target_link_libraries(rnnoise_vad_test PRIVATE ${libs_trd_srv} ${SYS_LIBS})
+
+# 添加fftw_eq可执行文件
+add_executable(qmplay2_eq ${CMAKE_CURRENT_SOURCE_DIR}/src/qmplay2_eq.cpp)
+target_include_directories(qmplay2_eq PRIVATE ${libSRV_INCLUDES_DIR})
+target_link_libraries(qmplay2_eq PRIVATE ${libs_trd_srv} ${SYS_LIBS})
 
 # # 设置库路径
 # set_target_properties(vad_example PROPERTIES

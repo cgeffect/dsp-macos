@@ -4,31 +4,69 @@ rootdir=$(cd $workdir/../../; pwd)
 
 src_dir_inside=fftw-3.3.10
 
-rm -rf "$workdir/deploy" \
-rm -rf "$workdir/${src_dir_inside}" && mkdir -p "$workdir/${src_dir_inside}" && cd "$workdir" && \
+echo "=== 开始编译FFTW (macOS M1 ARM64) ==="
+
+# 清理之前的构建
+rm -rf "$workdir/deploy"
+rm -rf "$workdir/${src_dir_inside}"
+
+# 解压源码
+echo "解压FFTW源码..."
+mkdir -p "$workdir/${src_dir_inside}" && cd "$workdir" && \
 tar -zxvf "$workdir/source/${src_dir_inside}.tar.gz"
 
-echo "--- build ${package} ---"
-############ build ${package} ############
-mkdir -p "$workdir/${src_dir_inside}/build" && cd "$workdir/${src_dir_inside}/build" && \
-cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-      -DBUILD_SHARED_LIBS=OFF \
-      -DENABLE_THREADS=ON \
-      -DENABLE_FLOAT=ON \
-      -DENABLE_SSE=ON \
-      -DENABLE_SSE2=ON \
-      -DENABLE_AVX=ON \
-      -DENABLE_AVX2=ON \
-      -DDISABLE_FORTRAN=ON \
-      -DCMAKE_INSTALL_PREFIX="$workdir/deploy" .. && \
-make -j12 && make install
+echo "--- 构建FFTW (ARM64) ---"
+############ build FFTW for ARM64 ############
+mkdir -p "$workdir/${src_dir_inside}/build" && cd "$workdir/${src_dir_inside}/build"
+
+# 配置CMake，专门针对M1 ARM64
+cmake \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_OSX_ARCHITECTURES="arm64" \
+    -DCMAKE_SYSTEM_NAME=Darwin \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
+    -DCMAKE_C_FLAGS="-arch arm64 -O3 -march=armv8-a" \
+    -DCMAKE_CXX_FLAGS="-arch arm64 -O3 -march=armv8-a" \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DENABLE_THREADS=ON \
+    -DENABLE_FLOAT=ON \
+    -DENABLE_SSE=OFF \
+    -DENABLE_SSE2=OFF \
+    -DENABLE_AVX=OFF \
+    -DENABLE_AVX2=OFF \
+    -DDISABLE_FORTRAN=ON \
+    -DCMAKE_INSTALL_PREFIX="$workdir/deploy" \
+    ..
 
 if [[ $? -ne 0 ]]; then
-    echo "ERROR: Failed to build ${package}"
-    exit -1
+    echo "ERROR: CMake配置失败"
+    exit 1
 fi
 
-echo "success!"
+echo "编译FFTW..."
+make -j$(sysctl -n hw.ncpu)
+
+if [[ $? -ne 0 ]]; then
+    echo "ERROR: 编译失败"
+    exit 1
+fi
+
+echo "安装FFTW..."
+make install
+
+if [[ $? -ne 0 ]]; then
+    echo "ERROR: 安装失败"
+    exit 1
+fi
+
+# 验证架构
+echo "验证编译结果..."
+file "$workdir/deploy/lib/libfftw3f.a"
+lipo -info "$workdir/deploy/lib/libfftw3f.a"
+
+echo "=== FFTW编译成功！==="
+echo "库文件位置: $workdir/deploy/lib/"
+echo "头文件位置: $workdir/deploy/include/"
 
 # option (BUILD_SHARED_LIBS "Build shared libraries" ON)
 # option (BUILD_TESTS "Build tests" ON)
