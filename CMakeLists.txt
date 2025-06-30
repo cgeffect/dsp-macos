@@ -19,8 +19,10 @@ set(libSRV_TRD_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty)
 list(APPEND libSRV_INCLUDES_DIR ./)
 
 list(APPEND libSRV_INCLUDES_DIR ${libSRV_TRD_ROOT_PATH}/speexdsp/deploy/include)
+list(APPEND libSRV_INCLUDES_DIR ${libSRV_TRD_ROOT_PATH}/rnnoise/deploy/include)
 
 list(APPEND libs_trd_srv ${libSRV_TRD_ROOT_PATH}/speexdsp/deploy/lib/libspeexdsp.a)
+list(APPEND libs_trd_srv ${libSRV_TRD_ROOT_PATH}/rnnoise/deploy/lib/librnnoise.a)
 
 find_library(LZMA_FRAMEWORK lzma)
 find_library(LZ_FRAMEWORK z)
@@ -45,6 +47,8 @@ list(APPEND SYS_LIBS ${SECURITY_FRAMEWORK})
 set(SOURCE_FILES    
     ${CMAKE_CURRENT_SOURCE_DIR}/src/util/VAD.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/util/VAD.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/util/ANS.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/util/ANS.cpp
 )
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_FILES})
 
@@ -52,4 +56,25 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_FILES})
 add_executable(vad_example ${CMAKE_CURRENT_SOURCE_DIR}/src/vad_example.cpp ${SOURCE_FILES})
 target_include_directories(vad_example PRIVATE ${libSRV_INCLUDES_DIR})
 target_link_libraries(vad_example PRIVATE ${libs_trd_srv} ${SYS_LIBS})
+
+# 添加ans_example可执行文件
+add_executable(ans_example ${CMAKE_CURRENT_SOURCE_DIR}/src/ans_example.cpp ${SOURCE_FILES})
+target_include_directories(ans_example PRIVATE ${libSRV_INCLUDES_DIR})
+target_link_libraries(ans_example PRIVATE ${libs_trd_srv} ${SYS_LIBS})
+
+# 添加agc_test可执行文件
+add_executable(agc_test ${CMAKE_CURRENT_SOURCE_DIR}/src/agc_test.cpp ${SOURCE_FILES})
+target_include_directories(agc_test PRIVATE ${libSRV_INCLUDES_DIR})
+target_link_libraries(agc_test PRIVATE ${libs_trd_srv} ${SYS_LIBS})
+
+# # 设置库路径
+# set_target_properties(vad_example PROPERTIES
+#     BUILD_WITH_INSTALL_RPATH TRUE
+#     INSTALL_RPATH "${CMAKE_SOURCE_DIR}/3rdparty/speexdsp/deploy/lib"
+# )
+
+# set_target_properties(ans_example PROPERTIES
+#     BUILD_WITH_INSTALL_RPATH TRUE
+#     INSTALL_RPATH "${CMAKE_SOURCE_DIR}/3rdparty/speexdsp/deploy/lib"
+# )
 

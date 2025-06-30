@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/Users/jason/Jason/mogic/Mac/native-render/third_party/av-media/framework/3rdparty/speexdsp/deploy/lib'
+libdir='/Users/jason/Jason/webrtc/dsp-macos/3rdparty/speexdsp/deploy/lib'

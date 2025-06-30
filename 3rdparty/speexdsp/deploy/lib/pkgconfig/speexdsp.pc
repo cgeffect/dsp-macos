@@ -1,6 +1,6 @@
 # libspeexdsp pkg-config source file
 
-prefix=/Users/jason/Jason/mogic/Mac/native-render/third_party/av-media/framework/3rdparty/speexdsp/deploy
+prefix=/Users/jason/Jason/webrtc/dsp-macos/3rdparty/speexdsp/deploy
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
